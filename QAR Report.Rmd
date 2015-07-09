@@ -1,0 +1,148 @@
+---
+title: "Qualitative Activity Recognition"
+author: "R Carroll"
+date: "July 7, 2015"
+output: html_document
+---
+
+# Summary
+Velloso et alia propose Qualitative Activity Recognition as an extension of Activity Recognition focused on how well an activity is performed. In their paper, Qualitative Activity Recognition of Weight Lifting Exercises, (Velloso et alia, 2013) the researchers address this problem with a classification approach and a model-based approach. In the classification approach, the activity under observation is classified into one of 5 qualitative categories. This report builds on their work with the classification approach.
+
+This report describes the classification of an observed activity into one of 5 qualitative categories using an instantaneous sample of experimental data. This analysis uses the experimental data and categories from the Weight Lifting Exercises Dataset.(Velloso et alia, 2013)
+
+#Data Cleaning
+The dataset provided by Velloso et alia is organized with two types of rows, some rows contain instananeous sensor data and others contain summary statistics from a 2.5s window. The problem was stated as using only instantaneous data as the input for the classification so the summary data rows can be discarded.
+
+
+
+```{r,eval=FALSE,cache=TRUE}
+# download file using link from Coursera Practical Machine Learning Peer 
+# Assessment Page
+download.file("https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv",
+              destfile="pml-training.csv",
+              method = "curl")
+```
+```{r, echo=FALSE}
+# load data
+training <- read.csv("pml-training.csv")
+```
+```{r}
+# remove rows containing summary statistics as indicated by the "new_window"
+# feature
+use_rows <- training$new_window == "no"
+```
+
+The columns left empty or invalid by the removal of summary rows were removed. Columns which do not capture any information about the activity under observation, but only record organizational information or aspects of the experimental design were also removed. These columns include the row number, the name of the experimental subject, and the test time.
+```{r, results='hide'}
+library(caret)
+use_cols <- grep("X|user_name|timestamp|window|^kurtosis|^skewness|^avg|^stddev|^var|^min|^max|^amplitude",names(training), invert=TRUE)
+```
+```{r, echo=FALSE}
+training <- training[use_rows, use_cols]
+set.seed(474)
+inTrain <- createDataPartition(training[,c("classe")],p = 0.7,list = FALSE)
+testing <- training[-inTrain,]
+training <- training[inTrain,]
+```
+
+Cleaning the data in this way removed all the NA, NaN, and Divide by Zero entries from the dataset, thus there was not need to handle them otherwise.
+
+# Exploration
+Plotting the remaining variables in the dataset reveals that several appear to be highly correlated e.g. Forearm Gyroscope Y and Z Axis Measurements. Other pairs of variables have interesting interactions e.g. Dumbell Roll and Yaw Measurements.
+
+For this analysis, I chose to include all variables. I was more interested in the performance of the different models than in feature selection. Additionally, I suspected that I would use the random forest classifier in the end, and it is insensitive to the addition of correlated features. 
+```{r, echo=FALSE, cache=TRUE}
+plotting <- createDataPartition(testing$classe, p = 0.05, list=FALSE)
+plotdata <- testing[plotting,]
+plot(plotdata[,c("gyros_forearm_y", "gyros_forearm_z")], 
+     main = "Forearm Gyroscope Y and Z Axis Measurements")
+plot(plotdata[,c("roll_dumbbell", "yaw_dumbbell")],
+     main = "Dumbell Roll and Yaw Measurements")
+```
+
+
+# Model Generation
+I trained several models on a 70% subset of the training data using 3 fold cross validation, then estimated and compared their out of sample performance on the remaining 30% of the training data. I trained models with the following methods: classification tree, random forest, SVM, linear discriminant analysis, and k-NN.
+
+## Hypotheses
+I do not expect that LDA will perform well. This data violates the LDA assumptions of independence and Gaussian distribution. The features are not independent, because they are all dependent on the underlying activity, and there are many samples from the same activity and the same test subject.
+The classification tree, SVM, and k-NN models will perform better, because the data do not violate the assumptions of the model.
+The random forest model should exhibit the best performance, because it is the only ensemble classifier tested. At the very least the random forest model should outperform the classification tree model, which is it's non-ensemble analogue. 
+
+## Cross Validation
+Cross validation is used in the training algorithms of rpart and caret to select the best parameters for the trained models. Theoretically, the cross validation error rates could be used as an estimate of the out of sample error rate of the classifier. In this case, there was enough data available to create a separate data set for evaluating the out of sample error. For this analysis, cross validation was used only for selecting the model parameters. A separate data set was used for estimating out of sample accuracy.
+
+```{r, cache=TRUE, results="hide"}
+library(rpart)
+library(caret)
+library(kernlab)
+# enable multi-core processing
+cl <- makeCluster(detectCores())
+registerDoParallel(cl)
+train.control <- trainControl(method = "cv", number = 3, allowParallel=TRUE)
+rpart.control <- rpart.control(xval = 3)
+# Train several models
+set.seed(474)
+mod.rpart <- rpart(classe~., method="class", data = training, control = rpart.control)
+set.seed(474)
+mod.rf <- train(classe~., method="rf", data = training, trControl = train.control)
+set.seed(474)
+mod.svm <- train(classe~., method="svmLinear", data = training, trControl = train.control)
+set.seed(474)
+mod.lda <- train(classe~., method="lda", data = training, trControl = train.control)
+set.seed(474)
+mod.knn <- train(classe~., method="knn", data = training, trControl = train.control)
+```
+
+As stated above, I used 30% of the training data to compare the classifiers and pick the one with the best performance. I used the Kappa statistic to evaluate the performance of the models, because it compares the performance of a model to the base rate of a random classifier. 
+```{r}
+pred.rpart <- predict(mod.rpart, testing, type = "class")
+pred.rf <- predict(mod.rf, testing)
+pred.svm <- predict(mod.svm, testing)
+pred.lda <- predict(mod.lda, testing)
+pred.knn <- predict(mod.knn, testing)
+```
+```{r, cache=TRUE, results="hide"}
+kappa.rpart <- confusionMatrix(pred.rpart, testing$classe)$overall[2]
+kappa.rf <- confusionMatrix(pred.rf, testing$classe)$overall[2]
+kappa.svm <- confusionMatrix(pred.svm, testing$classe)$overall[2]
+kappa.lda <- confusionMatrix(pred.lda, testing$classe)$overall[2]
+kappa.knn <- confusionMatrix(pred.knn, testing$classe)$overall[2]
+```
+```{r, echo=FALSE}
+names(kappa.rpart) <- "rpart"
+names(kappa.rf) <- "rf"
+names(kappa.svm) <- "svm"
+names(kappa.lda) <- "lda"
+names(kappa.knn) <- "knn"
+```
+The Kappa values of the various models on the testing subset of the training data are:
+```{r, echo=FALSE}
+sort(c(kappa.rpart, kappa.rf, kappa.svm, kappa.lda, kappa.knn), decreasing = TRUE)
+```
+
+As expected, the random forest classifier has the best performance, and the LDA classifier has the worst performance.
+
+# Results
+The random forest classifier is selected for the final analysis, because it has the best performance among the tested models.
+The out of sample error rate for the random forest classifier is
+```{r, echo=FALSE}
+1-as.numeric(confusionMatrix(pred.rf, testing$classe)$overall[1])
+```
+This out of sample error rate was calculated using 30% of the training data, which was withheld when the model was trained. This data subset is referred to as "testing" in the R code included in this document.
+
+This model predicted the following values for the Submission portion of the Coursera assignment that prompted this report:
+
+```{r, eval=FALSE, echo=FALSE}
+download.file("https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv",
+              destfile="pml-testing.csv",
+              method = "curl")
+```
+```{r}
+testing2 <- read.csv("pml-testing.csv")
+predict(mod.rf, testing2);
+```
+
+# References
+
+[Velloso, E.; Bulling, A.; Gellersen, H.; Ugulino, W.; Fuks, H. Qualitative Activity Recognition of Weight Lifting Exercises. Proceedings of 4th International Conference in Cooperation with SIGCHI (Augmented Human '13) . Stuttgart, Germany: ACM SIGCHI, 2013.](http://groupware.les.inf.puc-rio.br/har)
