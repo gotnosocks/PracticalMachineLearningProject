@@ -34,6 +34,8 @@ use_rows <- training$new_window == "no"
 
 The columns left empty or invalid by the removal of summary rows were removed. Columns which do not capture any information about the activity under observation, but only record organizational information or aspects of the experimental design were also removed. These columns include the row number, the name of the experimental subject, and the test time.
 ```{r, results='hide'}
+library(ggplot2)
+library(lattice)
 library(caret)
 use_cols <- grep("X|user_name|timestamp|window|^kurtosis|^skewness|^avg|^stddev|^var|^min|^max|^amplitude",names(training), invert=TRUE)
 ```
@@ -95,7 +97,10 @@ mod.knn <- train(classe~., method="knn", data = training, trControl = train.cont
 ```
 
 As stated above, I used 30% of the training data to compare the classifiers and pick the one with the best performance. I used the Kappa statistic to evaluate the performance of the models, because it compares the performance of a model to the base rate of a random classifier. 
-```{r}
+```{r, message=FALSE}
+library(randomForest)
+library(kernlab)
+library(MASS)
 pred.rpart <- predict(mod.rpart, testing, type = "class")
 pred.rf <- predict(mod.rf, testing)
 pred.svm <- predict(mod.svm, testing)

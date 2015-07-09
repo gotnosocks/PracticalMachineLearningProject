@@ -84,10 +84,10 @@ download.file(&quot;https://d396qusza40orc.cloudfront.net/predmachlearn/pml-trai
 # feature
 use_rows &lt;- training$new_window == &quot;no&quot;</code></pre>
 <p>The columns left empty or invalid by the removal of summary rows were removed. Columns which do not capture any information about the activity under observation, but only record organizational information or aspects of the experimental design were also removed. These columns include the row number, the name of the experimental subject, and the test time.</p>
-<pre class="r"><code>library(caret)</code></pre>
-<pre><code>## Loading required package: lattice
-## Loading required package: ggplot2</code></pre>
-<pre class="r"><code>use_cols &lt;- grep(&quot;X|user_name|timestamp|window|^kurtosis|^skewness|^avg|^stddev|^var|^min|^max|^amplitude&quot;,names(training), invert=TRUE)</code></pre>
+<pre class="r"><code>library(ggplot2)
+library(lattice)
+library(caret)
+use_cols &lt;- grep(&quot;X|user_name|timestamp|window|^kurtosis|^skewness|^avg|^stddev|^var|^min|^max|^amplitude&quot;,names(training), invert=TRUE)</code></pre>
 <p>Cleaning the data in this way removed all the NA, NaN, and Divide by Zero entries from the dataset, thus there was not need to handle them otherwise.</p>
 </div>
 <div id="exploration" class="section level1">
@@ -125,16 +125,14 @@ mod.lda &lt;- train(classe~., method=&quot;lda&quot;, data = training, trControl
 set.seed(474)
 mod.knn &lt;- train(classe~., method=&quot;knn&quot;, data = training, trControl = train.control)</code></pre>
 <p>As stated above, I used 30% of the training data to compare the classifiers and pick the one with the best performance. I used the Kappa statistic to evaluate the performance of the models, because it compares the performance of a model to the base rate of a random classifier.</p>
-<pre class="r"><code>pred.rpart &lt;- predict(mod.rpart, testing, type = &quot;class&quot;)
-pred.rf &lt;- predict(mod.rf, testing)</code></pre>
-<pre><code>## Loading required package: randomForest
-## randomForest 4.6-10
-## Type rfNews() to see new features/changes/bug fixes.</code></pre>
-<pre class="r"><code>pred.svm &lt;- predict(mod.svm, testing)</code></pre>
-<pre><code>## Loading required package: kernlab</code></pre>
-<pre class="r"><code>pred.lda &lt;- predict(mod.lda, testing)</code></pre>
-<pre><code>## Loading required package: MASS</code></pre>
-<pre class="r"><code>pred.knn &lt;- predict(mod.knn, testing)</code></pre>
+<pre class="r"><code>library(randomForest)
+library(kernlab)
+library(MASS)
+pred.rpart &lt;- predict(mod.rpart, testing, type = &quot;class&quot;)
+pred.rf &lt;- predict(mod.rf, testing)
+pred.svm &lt;- predict(mod.svm, testing)
+pred.lda &lt;- predict(mod.lda, testing)
+pred.knn &lt;- predict(mod.knn, testing)</code></pre>
 <pre class="r"><code>kappa.rpart &lt;- confusionMatrix(pred.rpart, testing$classe)$overall[2]
 kappa.rf &lt;- confusionMatrix(pred.rf, testing$classe)$overall[2]
 kappa.svm &lt;- confusionMatrix(pred.svm, testing$classe)$overall[2]
