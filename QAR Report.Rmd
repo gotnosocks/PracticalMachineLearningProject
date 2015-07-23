@@ -47,12 +47,12 @@ testing <- training[-inTrain,]
 training <- training[inTrain,]
 ```
 
-Cleaning the data in this way removed all the NA, NaN, and Divide by Zero entries from the dataset, thus there was not need to handle them otherwise.
+Cleaning the data in this way removed all the NA, NaN, and Divide by Zero entries from the dataset, thus there was no need to handle them otherwise.
 
 # Exploration
 Plotting the remaining variables in the dataset reveals that several appear to be highly correlated e.g. Forearm Gyroscope Y and Z Axis Measurements. Other pairs of variables have interesting interactions e.g. Dumbell Roll and Yaw Measurements.
 
-For this analysis, I chose to include all variables. I was more interested in the performance of the different models than in feature selection. Additionally, I suspected that I would use the random forest classifier in the end, and it is insensitive to the addition of correlated features. 
+For this analysis, I chose to include all variables. I was more interested in the performance of the different modelling algorithms than in feature selection. 
 ```{r, echo=FALSE, cache=TRUE}
 plotting <- createDataPartition(testing$classe, p = 0.05, list=FALSE)
 plotdata <- testing[plotting,]
@@ -69,7 +69,7 @@ I trained several models on a 70% subset of the training data using 3 fold cross
 ## Hypotheses
 I do not expect that LDA will perform well. This data violates the LDA assumptions of independence and Gaussian distribution. The features are not independent, because they are all dependent on the underlying activity, and there are many samples from the same activity and the same test subject.
 The classification tree, SVM, and k-NN models will perform better, because the data do not violate the assumptions of the model.
-The random forest model should exhibit the best performance, because it is the only ensemble classifier tested. At the very least the random forest model should outperform the classification tree model, which is it's non-ensemble analogue. 
+The random forest model should exhibit the best performance, because it is the only ensemble classifier tested. At the very least, the random forest model should outperform the classification tree model, which is it's non-ensemble analogue. 
 
 ## Cross Validation
 Cross validation is used in the training algorithms of rpart and caret to select the best parameters for the trained models. Theoretically, the cross validation error rates could be used as an estimate of the out of sample error rate of the classifier. In this case, there was enough data available to create a separate data set for evaluating the out of sample error. For this analysis, cross validation was used only for selecting the model parameters. A separate data set was used for estimating out of sample accuracy.
