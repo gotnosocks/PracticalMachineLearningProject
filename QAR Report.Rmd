@@ -1,7 +1,7 @@
 ---
 title: "Qualitative Activity Recognition"
 author: "R Carroll"
-date: "July 7, 2015"
+date: "July 22, 2015"
 output: html_document
 ---
 
