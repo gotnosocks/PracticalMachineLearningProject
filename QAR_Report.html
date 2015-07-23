@@ -147,9 +147,9 @@ kappa.knn &lt;- confusionMatrix(pred.knn, testing$classe)$overall[2]</code></pre
 </div>
 <div id="results" class="section level1">
 <h1>Results</h1>
-<p>The random forest classifier is selected for the final analysis, because it has the best performance among the tested models. The out of sample error rate for the random forest classifier is</p>
+<p>The random forest classifier is selected for the final analysis, because it has the best performance among the tested models. The estimated out of sample error rate for the random forest classifier is</p>
 <pre><code>## [1] 0.007634912</code></pre>
-<p>This out of sample error rate was calculated using 30% of the training data, which was withheld when the model was trained. This data subset is referred to as “testing” in the R code included in this document.</p>
+<p>This out of sample error rate estimate was calculated using 30% of the training data, which was withheld when the model was trained. This data subset is referred to as “testing” in the R code included in this document.</p>
 <p>This model predicted the following values for the Submission portion of the Coursera assignment that prompted this report:</p>
 <pre class="r"><code>testing2 &lt;- read.csv(&quot;pml-testing.csv&quot;)
 predict(mod.rf, testing2);</code></pre>

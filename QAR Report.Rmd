@@ -130,11 +130,11 @@ As expected, the random forest classifier has the best performance, and the LDA 
 
 # Results
 The random forest classifier is selected for the final analysis, because it has the best performance among the tested models.
-The out of sample error rate for the random forest classifier is
+The estimated out of sample error rate for the random forest classifier is
 ```{r, echo=FALSE}
 1-as.numeric(confusionMatrix(pred.rf, testing$classe)$overall[1])
 ```
-This out of sample error rate was calculated using 30% of the training data, which was withheld when the model was trained. This data subset is referred to as "testing" in the R code included in this document.
+This out of sample error rate estimate was calculated using 30% of the training data, which was withheld when the model was trained. This data subset is referred to as "testing" in the R code included in this document.
 
 This model predicted the following values for the Submission portion of the Coursera assignment that prompted this report:
 
