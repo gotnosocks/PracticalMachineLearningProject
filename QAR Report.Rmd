@@ -52,7 +52,8 @@ Cleaning the data in this way removed all the NA, NaN, and Divide by Zero entrie
 # Exploration
 Plotting the remaining variables in the dataset reveals that several appear to be highly correlated e.g. Forearm Gyroscope Y and Z Axis Measurements. Other pairs of variables have interesting interactions e.g. Dumbell Roll and Yaw Measurements.
 
-For this analysis, I chose to include all variables. I was more interested in the performance of the different modelling algorithms than in feature selection. 
+For this analysis, I chose to include all variables. I was more interested in the performance of the different modelling algorithms than in feature selection.
+
 ```{r, echo=FALSE, cache=TRUE}
 plotting <- createDataPartition(testing$classe, p = 0.05, list=FALSE)
 plotdata <- testing[plotting,]
